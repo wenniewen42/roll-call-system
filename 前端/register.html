@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- 必要的 meta 标签 -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="static/css/bootstrap.min.css">
+
+    <title>Register</title>
+    <style>
+      .register-container {
+          max-width: 400px;
+          margin: 50px auto;
+          padding: 20px;
+          border: 1px solid #ccc;
+          border-radius: 10px;
+          box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="register-container">
+        <h2 class="text-center">Register</h2>
+        <form id="register-form">
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <input type="text" class="form-control" id="username" required>
+          </div>
+          <div class="mb-3">
+            <label for="email" class="form-label">Email address</label>
+            <input type="email" class="form-control" id="email" aria-describedby="emailHelp" required>
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" required>
+          </div>
+          <div class="mb-3">
+            <label for="confirmPassword" class="form-label">Confirm Password</label>
+            <input type="password" class="form-control" id="confirmPassword" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Register</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- 引入 Bootstrap 的 JavaScript -->
+    <script src="static/js/bootstrap.bundle.min.js"></script>
+
+    <!-- 添加处理注册的脚本 -->
+    <script>
+      document.getElementById('register-form').addEventListener('submit', function(event) {
+          event.preventDefault(); // 防止表单默认提交
+          const username = document.getElementById('username').value.trim();
+          const email = document.getElementById('email').value.trim();
+          const password = document.getElementById('password').value;
+          const confirmPassword = document.getElementById('confirmPassword').value;
+
+          if (password !== confirmPassword) {
+              alert('Passwords do not match!');
+              return;
+          }
+
+          // 简单的邮箱格式验证
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!emailRegex.test(email)) {
+              alert('Please enter a valid email address.');
+              return;
+          }
+
+          // 显示加载状态（可选）
+          const submitButton = event.target.querySelector('button[type="submit"]');
+          submitButton.disabled = true;
+          submitButton.textContent = 'Registering...';
+
+          fetch('http://localhost:5000/register', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username: username, email: email, password: password })
+          })
+          .then(response => {
+              if (!response.ok) {
+                  return response.json().then(data => {
+                      throw new Error(data.message || 'Registration failed');
+                  });
+              }
+              return response.json();
+          })
+          .then(data => {
+              alert('Registration successful!');
+              window.location.href = 'login.html';
+          })
+          .catch(error => {
+              alert(error.message);
+          })
+          .finally(() => {
+              // 恢复按钮状态
+              submitButton.disabled = false;
+              submitButton.textContent = 'Register';
+          });
+      });
+    </script>
+  </body>
+</html>
