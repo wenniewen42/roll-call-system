@@ -327,27 +327,7 @@ def view_and_download_attendance_report():
     elif report_type == '2':
         generate_excel_report(attendance_data, date)
     else:
-        print("無效選擇！")
-
-"""if __name__ == "__main__":
-    init_db()
-
-    while True:
-        print("\n歡迎使用出勤系統！")
-        print("1. 查看並下載出席報表")
-        print("0. 退出")
-        choice = input("請輸入選項: ")
-
-        if choice == "1":
-            view_and_download_attendance_report()
-        elif choice == "0":
-            print("退出系統！")
-            break
-        else:
-            print("無效選項，請重試！")"""
-
-
-    
+        print("無效選擇！") 
 
 if __name__ == "__main__":
     init_db()
