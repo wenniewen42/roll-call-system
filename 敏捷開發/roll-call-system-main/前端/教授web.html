@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+
+    <title>Roll call system</title>
+    <style>
+        .container-fluid {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .header-container {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+        }
+
+        .header-logo {
+            position: absolute;
+            bottom: 0px;
+            left: 20px;
+            max-width: 185px;
+            width: auto;
+            height: auto;
+        }
+
+        .header-image {
+            display: block;
+            margin: 20px auto;
+            max-width: 100%;
+            height: 500px;
+            width: 100%;
+        }
+
+        /* 固定導航欄 */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            background-color: white;
+        }
+
+        .header-text {
+            position: absolute;
+            bottom: 300px;
+            left: 400px;
+            font-size: 3rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+
+        body {
+            padding-bottom: 1000px;
+        }
+
+        .faq-container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+            margin: 20px auto;
+        }
+
+        html {
+            scroll-padding-top: 100px;
+        }
+
+        ul {
+            text-align: left;
+            padding-left: 50px;
+            list-style-position: inside;
+        }
+
+        li {
+            padding-left: 0;
+        }
+
+        .login-form {
+            position: absolute;
+            top: 70%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+            width: 300px;
+            text-align: center;
+        }
+
+        .login-form input {
+            margin: 10px 0;
+        }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid">
+        <!-- 固定的導航欄 -->
+        <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom fixed-top bg-white">
+          <a href="web.html" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+            <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"/></svg>
+            <img src="image/logo.png" class="header-logo">
+        </a>
+    
+          <ul class="nav nav-pills">
+            <li class="nav-item"><a href="課程清單頁面.html" class="nav-link active" id="nav-functions">課程清單</a></li>
+            <li class="nav-item"><a href="教授點名頁面.html" class="nav-link" id="nav-notice">教授點名頁面</a></li>
+            <!-- 教師/學生 -->
+            <li class="nav-item"><a href="web.html" class="nav-link" id="studentBtn" data-user-type="student">學生</a></li>
+            <li class="nav-item"><a href="教授web.html" class="nav-link" id="teacherBtn" data-user-type="professor">教師</a></li>
+          </ul>
+        </header>
+
+        <!-- 登入表單區塊 -->
+        <div class="header-container">
+            <img src="image/點名系統.jpg" alt="Descriptive Alt Text" class="header-image"> 
+            <div id="site-title" class="header-text">臺灣科技大學 點名系統</div>
+            
+            <div id="welcome-message" class="login-form" style="display: none;">
+                <h3>歡迎使用</h3>
+            </div>
+            <!-- 登入表單 -->
+            <div id="login-form" class="login-form" style="display: block;">
+                <h3>Login</h3>
+                <form id="loginForm">
+                    <input type="text" class="form-control" placeholder="Username" name="username" required>
+                    <input type="password" class="form-control" placeholder="Password" name="password" required>
+                    <button type="submit" class="btn btn-primary w-100">Login</button>
+                </form>
+                <div class="mt-3">
+                    <p>Don't have an account? <a href="register.html">Register</a></p>
+                </div>
+            </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // 如果 localStorage 中沒有 user_type，預設為 'student'
+            localStorage.setItem('user_type', 'professor');
+            console.log("User type defaulted to: professor");
+        });
+
+        document.querySelectorAll('a[data-user-type]').forEach(btn => {
+        btn.addEventListener('click', function(event) {
+            // 延遲跳轉，確保 localStorage 先更新
+            setTimeout(() => {
+                // 跳轉到新的頁面
+                if (user_type === 'student') {
+                    window.location.href = '學生頁面.html'; // 根據身份選擇頁面
+                } else if (user_type === 'professor') {
+                    window.location.href = '教師頁面.html'; // 根據身份選擇頁面
+                }
+            }, 100); // 延遲 100 毫秒
+        });
+    });
+
+        document.getElementById("loginForm").addEventListener("submit", function(event) {
+        event.preventDefault(); // 阻止表單的默認提交行為
+
+        // 獲取表單數據
+        const formData = new FormData(event.target);
+        const username = formData.get("username");
+        const password = formData.get("password");
+
+        localStorage.setItem('professor_id', username);
+
+        // 從 localStorage 獲取身份
+        const user_type = localStorage.getItem('user_type');
+        if (!user_type) {
+            alert("請先選擇身份");
+            return;
+        }
+
+        // 指定 API URL
+        const apiUrl = "http://127.0.0.1:5000"; // 使用固定 URL，或使用環境變數（如適用）
+
+        // 發送登入請求到後端
+        fetch(`${apiUrl}/login`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ username, password, user_type })
+        })
+        .then(response => {
+            console.log("Response Status:", response.status); // 打印狀態碼
+            if (!response.ok) {
+                throw new Error('網路無回應');
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // 登入成功
+                loginStatus = true; // 記錄登入狀態
+                window.location.href = "教授登入成功web.html";
+            } else {
+                alert("登入失敗：" + data.message);
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            alert("帳號/密碼錯誤，請再試一次。");
+        });
+    });
+
+    // 沒登入無法使用功能
+    let loginStatus = false;
+
+    // 檢查是否已登入
+    function checkLogin() {
+        if (!loginStatus) {
+            alert("請先登入");
+            return false; // 阻止跳轉行為
+        }
+    }
+    </script>
+  </body>
+</html>

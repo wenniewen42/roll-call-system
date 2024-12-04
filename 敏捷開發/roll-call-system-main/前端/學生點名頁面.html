@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+
+    <title>學生出席紀錄</title>
+    <style>
+      .container {
+        margin-top: 100px;
+      }
+
+      .table {
+        margin-top: 20px;
+      }
+
+      .header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+
+      .return-button {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- 頁面標題 -->
+      <div class="header">
+        <h1>學生歷史出席紀錄</h1>
+        <h3>學生姓名：<span id="studentName">張小明</span></h3>
+      </div>
+
+      <!-- 出席歷史紀錄表格 -->
+      <table class="table table-striped">
+        <thead>
+          <tr>
+            <th scope="col">日期</th>
+            <th scope="col">課程名稱</th>
+            <th scope="col">出席狀態</th>
+          </tr>
+        </thead>
+        <tbody id="attendanceHistory">
+          <!-- 動態生成數據 -->
+        </tbody>
+      </table>
+
+      <!-- 返回按鈕 -->
+      <div class="text-center return-button">
+        <a href="web.html" class="btn btn-primary">返回主頁</a>
+      </div>
+    </div>
+
+    <script>
+      //皆要改成動態 歷史紀錄
+      // 預設學生姓名和模擬課程資料
+      const studentName = "AAA"; // 預設學生姓名  
+      const attendanceRecords = [
+        { date: "2024-11-15", courseName: "程式設計基礎", status: "出席" },
+        { date: "2024-11-10", courseName: "資料結構與演算法", status: "缺席" },
+      ];
+
+      // 獲取當前時間
+      const today = new Date();
+      const formattedDate = `${today.getFullYear()}-${(today.getMonth() + 1)
+        .toString()
+        .padStart(2, "0")}-${today.getDate().toString().padStart(2, "0")}`;
+
+      // 假設學生剛剛點到名
+      const newAttendance = {
+        date: formattedDate,
+        courseName: "人工智慧概論",
+        status: "出席",
+      };
+      attendanceRecords.push(newAttendance);
+
+      // 動態渲染學生姓名
+      document.getElementById("studentName").textContent = studentName;
+
+      // 動態渲染表格數據
+      const attendanceHistory = document.getElementById("attendanceHistory");
+      attendanceRecords.forEach(record => {
+        const row = document.createElement("tr");
+
+        const dateCell = document.createElement("td");
+        dateCell.textContent = record.date;
+        row.appendChild(dateCell);
+
+        const courseCell = document.createElement("td");
+        courseCell.textContent = record.courseName;
+        row.appendChild(courseCell);
+
+        const statusCell = document.createElement("td");
+        statusCell.textContent = record.status;
+        row.appendChild(statusCell);
+
+        attendanceHistory.appendChild(row);
+      });
+    </script>
+  </body>
+</html>

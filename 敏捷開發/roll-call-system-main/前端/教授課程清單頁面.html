@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>課程清單</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .course-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .course-item {
+            background-color: white;
+            margin: 10px 0;
+            padding: 15px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+        }
+        .course-item button {
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .course-item button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<h1>課程清單</h1>
+<ul id="courseList" class="course-list"></ul>
+
+<script>
+    // 等頁面載入後執行
+    document.addEventListener('DOMContentLoaded', function() {
+        fetchCourses();
+    });
+
+    const user_type = localStorage.getItem('user_type');
+
+    if(user_type == 'student'){
+        user_id = localStorage.getItem('student_id');
+    }else{
+        user_id = localStorage.getItem('professor_id');
+    }
+
+    const apiUrl = "http://127.0.0.1:5000";  // 後端 API 的 URL
+
+    // 從後端獲取課程清單
+    const url = `${apiUrl}/get-courses?user_id=${user_id}&user_type=${user_type}`;
+
+    function fetchCourses() {
+        fetch(url, {
+            method: 'GET', // 確保使用 GET 方法
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+        })
+        .then(response => response.json())  // 解析 JSON 資料
+        .then(data => {
+            if (data.success) {
+                const courseList = document.getElementById('courseList');
+                courseList.innerHTML = '';  // 清空清單
+
+                // 顯示課程清單
+                data.courses.forEach(course => {
+                    const li = document.createElement('li');
+                    li.classList.add('course-item');
+                    li.innerHTML = `
+                        <span>${course.name}</span>
+                        <button onclick="viewDetails(${course.id})">查看詳情</button>
+                    `;
+                    courseList.appendChild(li);
+                });
+            } else {
+                alert(data.message || '無法獲取課程清單');
+            }
+        })
+        .catch(error => {
+            console.error('發生錯誤:', error);
+            alert('無法獲取課程清單');
+        });
+    }
+
+    // 查看課程詳情
+    function viewDetails(courseId) {
+        // 提示功能 (可以改為跳轉至詳細頁面)
+        window.location.href = "教授點名頁面.html";
+        //alert(`顯示課程 ${courseId} 的詳情`);
+    }
+</script>
+
+
+</body>
+</html>

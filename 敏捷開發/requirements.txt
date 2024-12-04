@@ -1,0 +1,6 @@
+flask
+werkzeug
+flask_cors
+qrcode
+flask_sqlalchemy
+Pillow

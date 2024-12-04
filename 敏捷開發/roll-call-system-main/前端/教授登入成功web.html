@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+
+    <title>Roll call system</title>
+    <style>
+        .container-fluid {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .header-container {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+        }
+
+        .header-logo {
+            position: absolute;
+            bottom: 0px;
+            left: 20px;
+            max-width: 185px;
+            width: auto;
+            height: auto;
+        }
+
+        .header-image {
+            display: block;
+            margin: 20px auto;
+            max-width: 100%;
+            height: 500px;
+            width: 100%;
+        }
+
+        /* 固定導航欄 */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            background-color: white;
+        }
+
+        .header-text {
+            position: absolute;
+            bottom: 300px;
+            left: 400px;
+            font-size: 3rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        }
+
+        body {
+            padding-bottom: 1000px;
+        }
+
+        .faq-container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+            margin: 20px auto;
+        }
+
+        html {
+            scroll-padding-top: 100px;
+        }
+
+        ul {
+            text-align: left;
+            padding-left: 50px;
+            list-style-position: inside;
+        }
+
+        li {
+            padding-left: 0;
+        }
+
+        .login-form {
+            position: absolute;
+            top: 70%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 8px;
+            width: 300px;
+            text-align: center;
+        }
+
+        .container {
+            margin-top: 120px;
+        }
+
+        .form-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .qr-code-box {
+            width: 200px;
+            height: 200px;
+            border: 2px dashed #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px auto;
+            text-align: center;
+            color: #aaa;
+        }
+
+        .pin-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 10px;
+            color: #007bff;
+        }
+
+        .btn-generate {
+            margin-top: 20px;
+        }
+
+        .timer {
+            font-size: 1rem;
+            color: #ff5722;
+            margin-top: 10px;
+        }
+
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid">
+        <!-- 固定的導航欄 -->
+        <header class="d-flex flex-wrap justify-content-center py-3 mb-4 border-bottom fixed-top bg-white">
+          <a href="web.html" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-dark text-decoration-none">
+            <svg class="bi me-2" width="40" height="32"><use xlink:href="#bootstrap"/></svg>
+            <img src="image/logo.png" class="header-logo">
+        </a>
+    
+          <ul class="nav nav-pills">
+            <li class="nav-item"><a href="教授課程清單頁面.html" class="nav-link active" id="nav-functions">課程清單</a></li>
+            <li class="nav-item"><a href="教授點名頁面.html" class="nav-link" id="nav-notice">點名頁面</a></li>
+            <!-- 教師/學生 -->
+            <li class="nav-item"><a href="web.html" class="nav-link" id="studentBtn">學生</a></li>
+            <li class="nav-item"><a href="教授web.html" class="nav-link" id="teacherBtn">教師</a></li>
+            
+          </ul>
+        </header>
+
+        <!-- 登入表單區塊 -->
+        <div class="header-container">
+            <img src="image/點名系統.jpg" alt="Descriptive Alt Text" class="header-image"> 
+            <div id="site-title" class="header-text">臺灣科技大學 點名系統</div>
+            
+            <div id="welcome-message" class="login-form">
+                <h3>歡迎使用</h3>
+            </div>
+            
+            
+        
+    </div>
+
+    <div class="container">
+        <div class="form-container">
+            <h3 class="text-center">點名系統 - 教授功能</h3>
+            <hr>
+            
+            <!-- 填入課程名稱 -->
+            <div class="form-group">
+                <label for="courseName">課程名稱：</label>
+                <input type="text" id="courseName" class="form-control" placeholder="請輸入課程名稱">
+            </div>
+
+            <!-- 生成 PIN 碼按鈕 -->
+            <div class="form-group text-center">
+                <button id="generatePinBtn" class="btn btn-primary btn-generate">生成 PIN 碼與 QR Code</button>
+            </div>
+
+            <!-- PIN 碼顯示 -->
+            <div id="pinDisplay" class="pin-display text-center"></div>
+            <div id="pinTimer" class="timer text-center"></div>
+
+            <!-- QR Code 區域 -->
+            <div class="qr-code-box text-center">
+                <span id="qrPlaceholder">QR Code 區域</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const apiUrl = "http://127.0.0.1:5000"; // API 的基址
+        const generatePinBtn = document.getElementById("generatePinBtn");
+        const courseNameInput = document.getElementById("courseName");
+        const pinDisplay = document.getElementById("pinDisplay");
+        const pinTimer = document.getElementById("pinTimer");
+        const qrPlaceholder = document.getElementById("qrPlaceholder");
+
+        let countdownTimer = null; // 倒计时计时器
+
+        generatePinBtn.addEventListener("click", async (event) => {
+            event.preventDefault();  // 阻止表单提交行为
+            console.log("Generate PIN button clicked");
+            const course_name = courseNameInput.value.trim();
+
+            if (!course_name) {
+                alert("請輸入課程名稱！");
+                return;
+            }
+
+            // 先清除之前的倒计时和显示，确保UI完全重置
+            console.log("before reset");
+            resetUI();
+            console.log("after reset");
+
+            try {
+                const response = await fetch(`${apiUrl}/generate-pin`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ course_name: course_name }),
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // 显示 PIN 和 QR Code
+                    displayPinAndQRCode(data.pin, data.qr_code_url);
+
+                    // 直接启动倒计时，传递 pin 和 qr_code_url
+                    startCountdown(300, data.pin, data.qr_code_url);  // 传递 pin 和 qr_code_url
+                } else {
+                    alert(data.message || "生成 PIN 碼失敗，請稍後再試。");
+                }
+                
+            } catch (error) {
+                console.error("Error generating PIN:", error);
+                alert("生成 PIN 碼時發生錯誤，請確認後端伺服器是否正常運行。");
+            }
+        });
+
+        function displayPinAndQRCode(pin, qrCodeUrl) {
+            pinDisplay.textContent = `生成的 PIN 碼：${pin}`;
+            qrPlaceholder.innerHTML = `<img src="${qrCodeUrl}" alt="QR Code" style="max-width: 100%; height: auto;">`;
+        }
+
+        function startCountdown(seconds, pin, qrCodeUrl) {
+            console.log("Countdown started");
+
+            let remainingTime = seconds;
+
+            function updateTimer() {
+                if (remainingTime <= 0) {
+                    pinDisplay.textContent = "PIN 碼已過期，請重新生成。";
+                    pinTimer.textContent = "";
+                    qrPlaceholder.innerHTML = "QR Code 區域";
+                } else {
+                    const minutes = Math.floor(remainingTime / 60);
+                    const sec = remainingTime % 60;
+                    pinTimer.textContent = `剩餘時間：${minutes}:${sec.toString().padStart(2, "0")}`;
+                    remainingTime--;
+
+                    // 使用 requestAnimationFrame 提高UI更新的效率
+                    requestAnimationFrame(() => setTimeout(updateTimer, 1000));
+                }
+            }
+
+            updateTimer();
+        }
+
+        function resetUI() {
+            pinDisplay.textContent = "";
+            pinTimer.textContent = "";
+            qrPlaceholder.innerHTML = "QR Code 區域";
+        }
+
+
+
+
+    </script>
+  </body>
+</html>
