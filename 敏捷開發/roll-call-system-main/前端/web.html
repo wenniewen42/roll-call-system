@@ -181,6 +181,10 @@
             return;
         }
 
+        // 從 URL 中提取 PIN 碼（如果有）
+        const urlParams = new URLSearchParams(window.location.search);
+        const pin = urlParams.get('pin');  // 取得 PIN 參數
+
         // 指定 API URL
         const apiUrl = "http://127.0.0.1:5000"; // 使用固定 URL，或使用環境變數（如適用）
 
@@ -190,7 +194,7 @@
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ username, password, user_type })
+            body: JSON.stringify({ username, password, user_type, pin })
         })
         .then(response => {
             console.log("Response Status:", response.status); // 打印狀態碼

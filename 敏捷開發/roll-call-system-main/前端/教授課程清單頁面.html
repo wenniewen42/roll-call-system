@@ -84,8 +84,8 @@
                     li.classList.add('course-item');
                     li.innerHTML = `
                         <span>${course.name}</span>
-                        <button onclick="viewDetails(${course.id})">查看詳情</button>
-                    `;
+                        <button onclick="viewDetails('${course.name}')">查看詳情</button>
+                `;
                     courseList.appendChild(li);
                 });
             } else {
@@ -99,10 +99,13 @@
     }
 
     // 查看課程詳情
-    function viewDetails(courseId) {
-        // 提示功能 (可以改為跳轉至詳細頁面)
-        window.location.href = "教授點名頁面.html";
-        //alert(`顯示課程 ${courseId} 的詳情`);
+    function viewDetails(courseName) {
+    // 將選擇的課程 ID 和名稱保存到 localStorage
+    //localStorage.setItem('selected_course_id', courseId);
+    localStorage.setItem('selected_course_name', courseName);
+
+    // 跳轉至點名頁面
+    window.location.href = "教授點名頁面.html";
     }
 </script>
 

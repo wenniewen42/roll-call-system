@@ -57,49 +57,71 @@
     </div>
 
     <script>
-      //皆要改成動態 歷史紀錄
-      // 預設學生姓名和模擬課程資料
-      const studentName = "AAA"; // 預設學生姓名  
-      const attendanceRecords = [
-        { date: "2024-11-15", courseName: "程式設計基礎", status: "出席" },
-        { date: "2024-11-10", courseName: "資料結構與演算法", status: "缺席" },
-      ];
+      document.addEventListener("DOMContentLoaded", function() {
+        const studentId = localStorage.getItem('student_id'); // 假設學生ID為123，您可以根據需求調整或從後端獲取
+        const courseName = localStorage.getItem('selected_stu_course_name');
 
-      // 獲取當前時間
-      const today = new Date();
-      const formattedDate = `${today.getFullYear()}-${(today.getMonth() + 1)
-        .toString()
-        .padStart(2, "0")}-${today.getDate().toString().padStart(2, "0")}`;
+        // 獲取該學生的出席紀錄
+        fetch(`http://127.0.0.1:5000/get-attendance?student_id=${studentId}&courseName=${courseName}`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.success) {
+              renderAttendanceHistory(data.attendance);
+            } else {
+              alert('無法獲取出席紀錄');
+            }
+          })
+          .catch(error => {
+            console.error('發生錯誤:', error);
+            alert('無法獲取出席紀錄');
+          });
 
-      // 假設學生剛剛點到名
-      const newAttendance = {
-        date: formattedDate,
-        courseName: "人工智慧概論",
-        status: "出席",
-      };
-      attendanceRecords.push(newAttendance);
+        function renderAttendanceHistory(records) {
+          // 動態渲染學生姓名
+          document.getElementById("studentName").textContent = localStorage.getItem('student_id') || "未知學生";
 
-      // 動態渲染學生姓名
-      document.getElementById("studentName").textContent = studentName;
+          // 動態渲染表格數據
+          const attendanceHistory = document.getElementById("attendanceHistory");
+          attendanceHistory.innerHTML = ""; // 清空表格
 
-      // 動態渲染表格數據
-      const attendanceHistory = document.getElementById("attendanceHistory");
-      attendanceRecords.forEach(record => {
-        const row = document.createElement("tr");
+          // 根據日期排序紀錄
+          records.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        const dateCell = document.createElement("td");
-        dateCell.textContent = record.date;
-        row.appendChild(dateCell);
+          records.forEach(record => {
+            const row = document.createElement("tr");
 
-        const courseCell = document.createElement("td");
-        courseCell.textContent = record.courseName;
-        row.appendChild(courseCell);
+            const dateCell = document.createElement("td");
+            dateCell.textContent = record.date;
+            row.appendChild(dateCell);
 
-        const statusCell = document.createElement("td");
-        statusCell.textContent = record.status;
-        row.appendChild(statusCell);
+            const courseCell = document.createElement("td");
+            courseCell.textContent = record.course_name;
+            row.appendChild(courseCell);
 
-        attendanceHistory.appendChild(row);
+            const statusCell = document.createElement("td");
+            //statusCell.textContent = record.status;
+            switch (record.status) {
+                    case 'Present':
+                        statusCell.textContent = '出席';
+                        statusCell.style.color = 'green';  // 出席顯示為綠色
+                        break;
+                    case 'Absent':
+                        statusCell.textContent = '缺席';
+                        statusCell.style.color = 'red';  // 缺席顯示為紅色
+                        break;
+                    case 'Late':
+                        statusCell.textContent = '遲到';
+                        statusCell.style.color = 'orange';  // 遲到顯示為橙色
+                        break;
+                    default:
+                        statusCell.textContent = '未知';
+                        statusCell.style.color = 'gray';  // 其他狀況顯示為灰色
+            }
+            row.appendChild(statusCell);
+
+            attendanceHistory.appendChild(row);
+          });
+        }
       });
     </script>
   </body>

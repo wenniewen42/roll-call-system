@@ -68,33 +68,33 @@ with app.app_context():
 
 #     db.session.commit()
 
-with app.app_context():
-    # 查詢 AttendanceDate 和 Attendance 表的所有記錄
-        attendance_dates = AttendanceDate.query.all()  # 取得所有 AttendanceDate 紀錄
-        attendances = Attendance.query.all()  # 取得所有 Attendance 紀錄
+# with app.app_context():
+#     # 查詢 AttendanceDate 和 Attendance 表的所有記錄
+#         attendance_dates = AttendanceDate.query.all()  # 取得所有 AttendanceDate 紀錄
+#         attendances = Attendance.query.all()  # 取得所有 Attendance 紀錄
 
-        # 準備資料以便於輸出
-        attendance_data = []
+#         # 準備資料以便於輸出
+#         attendance_data = []
 
-        # 將 AttendanceDate 和 Attendance 資料結合起來
-        for attendance_date in attendance_dates:
-            date_info = {
-                'date': attendance_date.date,
-                'course_name': attendance_date.course_name,
-                'attendances': []
-            }
+#         # 將 AttendanceDate 和 Attendance 資料結合起來
+#         for attendance_date in attendance_dates:
+#             date_info = {
+#                 'date': attendance_date.date,
+#                 'course_name': attendance_date.course_name,
+#                 'attendances': []
+#             }
 
-            # 為每個 AttendanceDate 加入相應的 Attendance 記錄
-            for attendance in attendances:
-                if attendance.attendance_date_id == attendance_date.id:
-                    date_info['attendances'].append({
-                        'student_id': attendance.student_id,
-                        'status': attendance.status,
-                        'timestamp': attendance.timestamp
-                    })
+#             # 為每個 AttendanceDate 加入相應的 Attendance 記錄
+#             for attendance in attendances:
+#                 if attendance.attendance_date_id == attendance_date.id:
+#                     date_info['attendances'].append({
+#                         'student_id': attendance.student_id,
+#                         'status': attendance.status,
+#                         'timestamp': attendance.timestamp
+#                     })
 
-            attendance_data.append(date_info)
-        print('data: ',attendance_data)
+#             attendance_data.append(date_info)
+#         print('data: ',attendance_data)
 
     # # 刪除依賴表資料（Attendance）
     # db.session.query(Attendance).delete()
@@ -150,6 +150,8 @@ def login():
     username = data.get("username")
     password = data.get("password")
     user_type = data.get("user_type")  # 使用者類型: 'student' 或 'professor'
+    # pin = data.get("pin")  # 從請求中接收 PIN 碼
+    # print('pin: ', pin)
 
     if user_type == "student":
         # 查找學生
@@ -159,6 +161,37 @@ def login():
         if not check_password_hash(student.password, password):
             return jsonify({"success": False, "message": "Wrong account or password"}), 401
 
+        # if pin:
+        #     # 驗證 PIN 碼
+        #     pin_data = PinData.query.filter_by(pin=pin).first()
+        #     if not pin_data:
+        #         return jsonify({"success": False, "message": "Invalid or expired PIN"}), 400
+
+        #     # 獲取對應的點名日期
+        #     date_today = datetime.utcnow().date()
+        #     attendance_date = AttendanceDate.query.filter_by(
+        #         course_name=pin_data.course_name,
+        #         date=date_today
+        #     ).first()
+
+        #     if not attendance_date:
+        #         return jsonify({"success": False, "message": "Attendance record not found for this course"}), 404
+                
+        #     # 更新學生的點名狀態
+        #     attendance_record = Attendance.query.filter_by(
+        #         student_id=student.student_id,
+        #         attendance_date_id=attendance_date.id
+        #     ).first()
+
+        #     if attendance_record:
+        #         attendance_record.status = "Present"  # 標記為出席
+        #         db.session.commit()
+        #         return jsonify({
+        #             "success": True,
+        #             "message": f"Attendance marked as present for student {student.student_id}"
+        #         })
+        #     else:
+        #         return jsonify({"success": False, "message": "Attendance record not found for this student"}), 404
         return jsonify({"success": True, 'student_id': username, "message": "Student login successful"})
 
     elif user_type == "professor":
@@ -200,16 +233,15 @@ def generate_pin():
             db.session.add(new_pin)
             db.session.commit()  # 提交到數據庫
 
-        # 生成 QR Code(還沒完全設定好!!!)
-        qr = qrcode.make(f"PIN: {pin}")
+         # 設定 QR Code 指向學生登入頁面的 URL
+        login_url = f"http://127.0.0.1:5500/roll-call-system-main/前端/web.html?pin={pin}"
+        qr = qrcode.make(login_url)
         img_io = io.BytesIO()
         qr.save(img_io, 'PNG')
         img_io.seek(0)
 
         # 將 QR Code 編碼為 base64 並返回
         img_b64 = base64.b64encode(img_io.getvalue()).decode('utf-8')
-        if not img_b64:
-            raise Exception("QR Code encoding to base64 failed")
         qr_code_url = f"data:image/png;base64,{img_b64}"
 
         # 生成與課程相關的 AttendanceDate 紀錄
@@ -350,6 +382,97 @@ def get_courses():
     except Exception as e:
         return jsonify({'success': False, 'message': f'error: {str(e)}'}), 500
 
+@app.route('/get-attendance', methods=['GET'])
+def get_attendance():
+    # 嘗試從查詢參數中取得課程名稱和學生ID
+    course_name = request.args.get('course_name')  # 課程名稱
+    student_id = request.args.get('student_id')  # 學生ID（如果有）
+    courseName = request.args.get('courseName')
+
+    # 如果提供了課程名稱，查詢課程的點名資料
+    if course_name:
+        # 檢查課程是否存在
+        course = Course.query.filter_by(name=course_name).first()
+        if not course:
+            return jsonify({'success': False, 'message': '課程不存在'})
+
+        # 查詢點名日期
+        attendance_query = AttendanceDate.query.filter_by(course_name=course.name)
+
+        # 如果提供了日期，則進一步篩選
+        date = request.args.get('date')  # 可選的日期參數
+        if date:
+            try:
+                selected_date = datetime.strptime(date, '%Y-%m-%d').date()
+                attendance_query = attendance_query.filter_by(date=selected_date)
+            except ValueError:
+                return jsonify({'success': False, 'message': '日期格式錯誤，請使用 YYYY-MM-DD 格式'})
+
+        # 獲取符合條件的點名日期
+        attendance_dates = attendance_query.all()
+        if not attendance_dates:
+            return jsonify({'success': False, 'message': '找不到相關的點名資料'})
+
+        # 組織返回的數據
+        attendance_data = []
+        for attendance_date in attendance_dates:
+            records = Attendance.query.filter_by(attendance_date_id=attendance_date.id).order_by(Attendance.student_id).all()
+            attendance_data.append({
+                'date': attendance_date.date.strftime('%Y-%m-%d'),
+                'records': [{'student_id': r.student_id, 'status': r.status} for r in records]
+            })
+
+        return jsonify({
+            'success': True,
+            'course_name': course_name,
+            'attendance': attendance_data
+        })
+
+    # 如果提供了學生ID，查詢該學生的出席紀錄
+    if courseName and student_id:
+        # 查詢課程是否存在
+        course = Course.query.filter_by(name=courseName).first()
+        print('course: ', course)
+        if not course:
+            return jsonify({'success': False, 'message': '課程不存在'})
+
+        # 查詢該學生在該課程的出席紀錄
+        attendance_records = (
+        db.session.query(Attendance, AttendanceDate, Student)
+        .join(AttendanceDate, Attendance.attendance_date_id == AttendanceDate.id)
+        .join(Student, Attendance.student_id == Student.student_id)
+        .filter(
+            Attendance.student_id == student_id,
+            AttendanceDate.course_name == course.name
+        )
+        .all()
+    )
+
+        if not attendance_records:
+            return jsonify({'success': False, 'message': '該學生在此課程中無出席紀錄'})
+
+        # 處理資料並排序
+        records = []
+        for record in attendance_records:
+            attendance_record = {
+                'date': record.AttendanceDate.date.strftime('%Y-%m-%d'),
+                'status': record.Attendance.status,
+                'student_name': record.Student.student_id,
+                'course_name': courseName
+            }
+            records.append(attendance_record)
+        print('records: ', records)
+        # 根據日期排序紀錄
+        records.sort(key=lambda x: datetime.strptime(x['date'], '%Y-%m-%d'))
+
+        return jsonify({
+            'success': True,
+            'attendance': records
+        })
+
+
+    # 如果未提供課程名稱或學生ID，返回錯誤
+    return jsonify({'success': False, 'message': '缺少課程名稱或學生ID'}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)
