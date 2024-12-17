@@ -9,10 +9,13 @@ import base64
 import random
 import time
 from datetime import datetime
+import socket
 
 app = Flask(__name__)
 app.config.from_object(Config)
-CORS(app, resources={r"/*": {"origins": "http://127.0.0.1:5500"}}, supports_credentials=True)
+#CORS(app, resources={r"/*": {"origins": "http://127.0.0.1:5000"}}, supports_credentials=True)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
+#CORS(app)
 #Session(app)
 
 # 初始化資料庫
@@ -160,38 +163,6 @@ def login():
             return jsonify({"success": False, "message": "Student account does not exist"}), 404
         if not check_password_hash(student.password, password):
             return jsonify({"success": False, "message": "Wrong account or password"}), 401
-
-        # if pin:
-        #     # 驗證 PIN 碼
-        #     pin_data = PinData.query.filter_by(pin=pin).first()
-        #     if not pin_data:
-        #         return jsonify({"success": False, "message": "Invalid or expired PIN"}), 400
-
-        #     # 獲取對應的點名日期
-        #     date_today = datetime.utcnow().date()
-        #     attendance_date = AttendanceDate.query.filter_by(
-        #         course_name=pin_data.course_name,
-        #         date=date_today
-        #     ).first()
-
-        #     if not attendance_date:
-        #         return jsonify({"success": False, "message": "Attendance record not found for this course"}), 404
-                
-        #     # 更新學生的點名狀態
-        #     attendance_record = Attendance.query.filter_by(
-        #         student_id=student.student_id,
-        #         attendance_date_id=attendance_date.id
-        #     ).first()
-
-        #     if attendance_record:
-        #         attendance_record.status = "Present"  # 標記為出席
-        #         db.session.commit()
-        #         return jsonify({
-        #             "success": True,
-        #             "message": f"Attendance marked as present for student {student.student_id}"
-        #         })
-        #     else:
-        #         return jsonify({"success": False, "message": "Attendance record not found for this student"}), 404
         return jsonify({"success": True, 'student_id': username, "message": "Student login successful"})
 
     elif user_type == "professor":
@@ -234,6 +205,11 @@ def generate_pin():
             db.session.commit()  # 提交到數據庫
 
          # 設定 QR Code 指向學生登入頁面的 URL
+        # hostname = socket.gethostname()
+        # host = socket.gethostbyname(hostname)
+        # post = '5500'
+        #qr_data = f'http://{host}:{post}/student/auto_submit?pin_code={pin_code}'
+        #login_url = f"http://{host}:{post}/roll-call-system-main/前端/web.html?pin={pin}"
         login_url = f"http://127.0.0.1:5500/roll-call-system-main/前端/web.html?pin={pin}"
         qr = qrcode.make(login_url)
         img_io = io.BytesIO()
@@ -287,7 +263,20 @@ def validate_attendance():
     try:
         data = request.json
         pin = data.get('pin')
-        student_id = data.get('student_id')
+        student_id = data.get('username')
+        via_qrcode = data.get('via_qrcode', False)
+        print('student_id: ', student_id)
+
+        if via_qrcode:
+            password = data.get('password')
+            # 查找學生
+            student = Student.query.filter_by(student_id=student_id).first()
+            if not student:
+                return jsonify({"success": False, "message": "Student account does not exist"}), 404
+            if not check_password_hash(student.password, password):
+                return jsonify({"success": False, "message": "Wrong account or password"}), 401
+            return jsonify({"success": True, 'student_id': student_id, "message": "Student login successful"})
+
 
         # 1. 根據 pin 獲取對應的課程名稱 (course_name)
         pin_data = PinData.query.filter_by(pin=pin).first()
@@ -476,3 +465,4 @@ def get_attendance():
 
 if __name__ == '__main__':
     app.run(debug=True)
+    #app.run(host='0.0.0.0', port=5000, debug=True)

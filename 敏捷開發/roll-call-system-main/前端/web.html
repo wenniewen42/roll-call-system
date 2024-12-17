@@ -188,7 +188,28 @@
         // 指定 API URL
         const apiUrl = "http://127.0.0.1:5000"; // 使用固定 URL，或使用環境變數（如適用）
 
-        // 發送登入請求到後端
+        if(pin){
+            fetch(`${apiUrl}/validate-attendance`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ username, password, user_type, pin, via_qrcode: true })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("点名成功！");
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            alert("点名失败，请稍后再试！");
+        });
+        }else{
+            // 發送登入請求到後端
         fetch(`${apiUrl}/login`, {
             method: "POST",
             headers: {
@@ -217,6 +238,7 @@
             console.error("Error:", error);
             alert("帳號/密碼錯誤，請再試一次。");
         });
+        }
     });
 
     // 沒登入無法使用功能
